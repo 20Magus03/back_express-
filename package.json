@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "express": "^4.21.2",
+    "reservas-api": "file:",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   }
