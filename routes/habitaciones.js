@@ -106,7 +106,7 @@ router.post('/', async (req, res) => {
     const { num_habi, tipo, capacidad, precio, estado } = req.body;
 
     if (!num_habi || !tipo || !capacidad || !precio || estado === undefined) {
-        return res.status(400).json({ error: "Todos los campos son obligatorios." });
+        return res.status(400).json({ error: "Todos los campos son obligatorios y con valores válidos." });
     }
 
     const { data: existeHabitacion } = await supabase
@@ -125,9 +125,11 @@ router.post('/', async (req, res) => {
         .select('*')
         .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return res.status(500).json({ error: "Error interno." });
 
-    res.status(201).json(data);
+    res.status(201).json({
+        message: "Habitación creada exitosamente",
+    });
 });
 
 /**
@@ -190,18 +192,49 @@ router.patch('/:id', async (req, res) => {
         return res.status(404).json({ error: "Habitación no encontrada." });
     }
 
-    // Crear objeto con solo los campos que el usuario quiere actualizar
+    // Arreglo de los campos que se van a actualizar dentro del request body
     const camposActualizados = {};
-    if (num_habi !== undefined) camposActualizados.num_habi = num_habi;
-    if (tipo !== undefined) camposActualizados.tipo = tipo;
-    if (capacidad !== undefined) camposActualizados.capacidad = capacidad;
-    if (precio !== undefined) camposActualizados.precio = precio;
-    if (estado !== undefined) camposActualizados.estado = estado;
 
-    // Si no hay campos válidos para actualizar, devolver error
-    if (Object.keys(camposActualizados).length === 0) {
-        return res.status(400).json({ error: "Debe proporcionar al menos un campo para actualizar." });
+    if (num_habi !== undefined) {
+        if (typeof num_habi !== 'number' || num_habi <= 0) {
+            return res.status(400).json({ error: "El número de habitación debe ser un número mayor que 0." });
+        }
+        camposActualizados.num_habi = num_habi;
     }
+
+    if (tipo !== undefined) {
+        if (typeof tipo !== 'string' || tipo.trim() === '') {
+            return res.status(400).json({ error: "El tipo de habitación no puede estar vacío." });
+        }
+        camposActualizados.tipo = tipo;
+    }
+
+    if (capacidad !== undefined) {
+        if (typeof capacidad !== 'number' || capacidad <= 0) {
+            return res.status(400).json({ error: "La capacidad debe ser un número mayor que 0." });
+        }
+        camposActualizados.capacidad = capacidad;
+    }
+
+    if (precio !== undefined) {
+        if (typeof precio !== 'number' || precio <= 0) {
+            return res.status(400).json({ error: "El precio debe ser un número mayor que 0." });
+        }
+        camposActualizados.precio = precio;
+    }
+
+    if (estado !== undefined) {
+        if (typeof estado !== 'boolean') {
+            return res.status(400).json({ error: "El estado debe ser un valor booleano (true o false)." });
+        }
+        camposActualizados.estado = estado;
+    }
+
+    // Verificar si al menos un campo válido fue enviado
+    if (Object.keys(camposActualizados).length === 0) {
+        return res.status(400).json({ error: "Debe proporcionar al menos un campo válido para actualizar." });
+    }
+
 
     // Actualizar la habitación con los campos proporcionados
     const { data, error } = await supabase
@@ -211,9 +244,9 @@ router.patch('/:id', async (req, res) => {
         .select('*')
         .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return res.status(500).json({ error: "Error al actualizar los datos, verifique los datos!" });
 
-    res.json({ message: "Habitación actualizada correctamente.", data });
+    res.json({ message: "Habitación actualizada correctamente." });
 });
 
 
